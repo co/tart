@@ -14,7 +14,9 @@ class Kmeans(object):
 # Initial cluster configuration does not matter.
 		clusters = [[] for c in range(k)]
 		clusters[0] = dataPoints
-		print self.kmeansIteration(centroids, clusters)
+		clusters = self.kmeansIteration(centroids, clusters, 30)
+		return clusters
+
 
 	@staticmethod
 	def flatten(clusters):
@@ -24,12 +26,16 @@ class Kmeans(object):
 				result.append(point)
 		return result
 
-	def kmeansIteration(self, centroids, clusters):
+	def kmeansIteration(self, centroids, clusters, iterationsLeft):
+		print "centroids",centroids
+		print "clusters",clusters
 
 		dataPoints = Kmeans.flatten(clusters)
+		print "dataPoints", dataPoints
 		k = len(clusters)
 		newClusters = [[] for c in range(k)]
 
+		print dataPoints
 		for dataPoint in dataPoints:
 			minimalDistance = sys.maxint
 			closestCentroid = None
@@ -43,34 +49,44 @@ class Kmeans(object):
 					minimalDistance = distance
 					closestCentroid = clusterId
 			newClusters[closestCentroid].append(dataPoint)
+			print "newClusters", newClusters
 		for i in range(k):
-			if (Kmeans.areListsEqual(clusters[i], newClusters[i])):
+			if (Kmeans.areListsEqual(clusters[i], newClusters[i]) or
+					iterationsLeft == 0):
 				return newClusters
-		centroids = Kmeans.calculateNewCentroids(dataPoints)
-		return self.kmeansIteration(centroids, newClusters)
+		centroids = Kmeans.calculateNewCentroids(newClusters)
+		return self.kmeansIteration(centroids, newClusters, iterationsLeft-1)
 
 	@staticmethod
 	def areListsEqual(list1, list2):
+		print "list1", list1
+		print "list2", list2
 		if(not(len(list1) == len(list2))):
 			return False
-		size = len(list1)
-		if(len(set(list1) & set(list2)) == size):
-			return True
-		return False
+		for i in range(len(list1)):
+			if(not(list1[i] == list2[i])):
+				return False
+		return True
 
 	@staticmethod
 	def calculateNewCentroids(clusters):
-		centroids = [] * len(clusters)
-		k = len(centroids)
-		dimensions = 3
+		print "old: ", clusters
+		k = len(clusters)
+		print "k:", k
+		centroids = [None] * k
+		print "centroids:", centroids
+	
+		dimensions = len(Kmeans.flatten(clusters)[0])
+		print "dimensions:", dimensions
 		for clusterId in range(k):
 			tot = [0]* dimensions
-			for point in cluster[clusterId]:
+			for point in clusters[clusterId]:
 				tot = map(sum, zip(tot,point))
+				print "tot:", tot
 			centroids[clusterId] = [tot[i]/float(k) for i in range(dimensions)]
+			print "centroid:", clusterId, centroids[clusterId]
+		print "centroids: ", clusters
 		return centroids
-
-
 
 testData = [
 		[1, 0, 0],
@@ -94,4 +110,7 @@ class EuclideanDistance(object):
 		return (math.sqrt(sum([(p1[i]-p2[i])**2 for i in range(dimensions)])))
 
 kmeans = Kmeans(EuclideanDistance())
-kmeans.cluster(2, testData)
+result = kmeans.cluster(2, testData)
+print "*############################*"
+print result[0]
+print result[1]
